@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미로게임</title>
+    <style>
+        #stage {
+            width: 1200px;
+            height: 800px;
+            background: rgb(255, 237, 214);
+            margin: auto;
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+    <script src="./GameObject.js"></script>
+    <script src="./Brick.js"></script>
+    <script src="./Map.js"></script>
+    <script src="./Sensor.js"></script>
+    <script src="./Mario.js"></script>
+    <script src="./Flower.js"></script>
+    <script src="./MushroomR.js"></script>
+    <script src="./MushroomG.js"></script>
+    <script src="Star.js"></script>
+    <script src="../js/lib.js"></script>
+    <script>
+        let stage;
+        let level = 0; //현재 진행 중인 게임의 stage level.
+        let mario; //전역변수로 빼놓아야, loop()함수에서 마리오의 tick(), render() 함수를 호출할 수 있다.
+
+        //2차원 구조의 맵 배열을 순서있게 보관할 1차원 배열 정의
+        //-> 3차원 배열이 된다.
+        let mapArray = [map1, map2];
+        let flowerArray = [];
+        let mushroomRArray = [];
+        let mushroomGArray = [];
+        let starArray = [];
+
+        //마리오가 한 번 움직일 때마다 화면에 존재하는 모든 벽돌과 마리오의 충돌체크가 이뤄져야 하므로 
+        //다수의 벽돌은 배열에 담겨 있어야 반복문을 실행할 수 있다.
+        let brickArray = [];
+
+        //벽돌을 2차원 구조로 출력하는 함수 정의
+        function createBrick() {
+            //(container, src, width, height, x, y, velX, velY)
+            for (let a = 0; a < 20; a++) {
+                for (let i = 0; i < 30; i++) {
+                    if (mapArray[level][a][i] == 1) {
+                        let brick = new Brick(stage, "./images/brick.png", 40, 40, i * 40, a * 40, 0, 0);
+                        brickArray.push(brick);
+                    } else if (mapArray[level][a][i] == 2) {
+                        mario = new Mario(stage, "./images/mario.png", 45, 45, i * 45, a * 45, 0, 0);
+                    } else if (mapArray[level][a][i] == 3) {
+                        let item1 = new Flower(stage, "./images/item1.png", 40, 40, i * 40, a * 40, 0, 0);
+                        flowerArray.push(item1);
+                    } else if (mapArray[level][a][i] == 4) {
+                        let item2 = new MushroomR(stage, "./images/item2.png", 40, 40, i * 40, a * 40, 0, 0);
+                        mushroomRArray.push(item2);
+                    } else if (mapArray[level][a][i] == 5) {
+                        let item3 = new MushroomG(stage, "./images/item3.png", 40, 40, i * 40, a * 40, 0, 0);
+                        mushroomGArray.push(item3);
+                    } else if (mapArray[level][a][i] == 6) {
+                        let item4 = new Star(stage, "./images/item4.png", 40, 40, i * 40, a * 40, 0, 0);
+                        starArray.push(item4);
+                    }
+                }
+            }
+        }
+
+        //좌, 우로 움직이는 함수
+        function moveX(n) { //좌측 방향은 음수, 우측 방향은 양수
+            //충돌할 경우
+            for (let i = 0; i < brickArray.length; i++) { //모든 벽돌 수 만큼
+
+                //우측 센서 충돌 검사
+                let result = collisionCheck(mario.sensorArray[2], brickArray[i]);
+                if (result) {
+                    console.log(i, "번째 벽돌과 부딪쳤음");
+                    //마리오의 속도를 0으로 둔다.
+                    mario.velX = 0;
+
+                    //벽돌을 좌측에서 닿았을 때)
+                    //현재 마주친 벽돌의 x 좌표보다, 마리오의 너비만큼 좌측으로 x 위치를 설정.
+                    mario.x = brickArray[i].x - mario.width;
+
+                    //우측에 닿았을 때)
+                    //현재 닿은 벽돌의 x의 좌표값에 벽돌의 width를 더한 값을 마리오의 x 위치로 설정.
+
+
+                    //벽돌의 위에서 닿았을 때)
+                    //닿은 벽돌의 y값에서 마리오의 height 만큼 위로 올려 주인공의 y값을 설정
+
+
+                    //벽돌의 아래에 닿았을 때)
+                    //닿은 벽돌의 y 값에서 벽돌의 높이 만큼을 더한 값을 마리오의 y 값으로 설정
+                }
+            }
+
+            mario.velX = n;
+        }
+
+        //위, 아래로 움직이는 함수
+        function moveY(n) { //위 방향은 음수, 아래 방향은 양수
+            mario.velY = n;
+        }
+
+
+        //게임의 루프를 정의
+        function loop() {
+            //주인공의 tick(), render() 호출!
+            mario.tick();
+            mario.render();
+        }
+
+        function init() {
+            stage = document.getElementById("stage");
+            createBrick();
+        }
+
+        addEventListener("load", function () {
+            init();
+            setInterval("loop()", 10);
+
+            //mario를 키보드로 제어하기 위한 키 이벤트 연결
+            addEventListener("keydown", function (e) {
+                switch (e.keyCode) {
+                    case 37: moveX(-1); break; //좌
+                    case 39: moveX(1); break; //우
+                    case 38: moveY(-1); break; //상
+                    case 40: moveY(1); break; //하
+                }
+            });
+
+
+            addEventListener("keyup", function (e) {
+                switch (e.keyCode) {
+                    case 37: moveX(0); break; //좌
+                    case 39: moveX(0); break; //우
+                    case 38: moveY(0); break; //상
+                    case 40: moveY(0); break; //하
+                }
+            });
+        });
+
+    </script>
+</head>
+
+<body>
+    <div id="stage"></div>
+</body>
+
+</html>

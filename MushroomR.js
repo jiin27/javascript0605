@@ -1,0 +1,3 @@
+class MushroomR extends GameObject{
+    
+}
